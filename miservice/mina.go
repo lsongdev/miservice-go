@@ -3,6 +3,7 @@ package miservice
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -81,6 +82,55 @@ func (c *Client) ListMinaDevices(master int) (devices []DeviceData, err error) {
 		json.Unmarshal(ja, &devices[i])
 	}
 	return devices, nil
+}
+
+func (c *Client) GetConversations(did string) (map[string]interface{}, error) {
+	c.Login("mina")
+	fmt.Println(c)
+	fmt.Println("c")
+
+	fmt.Println(c.Token.Sids["micoapi"].ServiceToken)
+	url := "https://userprofile.mina.mi.com/device_profile/v2/conversation?limit=10&requestId=347c1907-56c3-4ffd-9abc-a8fbff4ef7e2&source=dialogu&hardware=LX06"
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Linux; Android 10; 000; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/119.0.6045.193 Mobile Safari/537.36 /XiaoMi/HybridView/ micoSoundboxApp/i appVersion/A_2.4.40")
+	req.Header.Add("Referer", "ttps://userprofile.mina.mi.com/dialogue-note/index.html")
+	//req.Header.Add("Cookie", `userId=2901732950; serviceToken=sXEJMjSdm6MHAaBJzdchB1uP2QH9R3XcXQQ5I+QjyOoUif5CKGOvTzqkyxT4xSJEYRCm6QDvoLgVlqZrcCPJv86exZR71oz/AGSYfNMzH1k/ASgV/sVJkDimywc89/62X3Xq1wVcwKaI9AtY848GC8lj/7OOe9IzD7zQLwY3JmJx7so+HsMVLuwNIk622psUQt4hPRFLFRsxSEGp4GesNxAQZzePsQul2Wnw+JemI5gloEX9RqZwyf5kQfxGRJMb; deviceId=26a0bc59-605b-4a87-85eb-1fae7c8fe454`)
+	devices, err := c.ListMinaDevices(1)
+	if err != nil {
+		return nil, err
+	}
+	deviceId := ""
+	for _, device := range devices {
+		if device.MiotDID == did {
+			deviceId = device.DeviceID
+		}
+	}
+	req.Header.Add("Cookie", fmt.Sprintf(`userId=%s; serviceToken=%s; deviceId=%s`, c.Token.UserId, c.Token.Sids["micoapi"].ServiceToken, deviceId))
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Println(string(body))
+	m := map[string]interface{}{}
+	json.Unmarshal(body, &m)
+	return m, nil
 }
 
 func (c *Client) RemoteUbusCall(deviceId, cmd string, message H, res H) error {

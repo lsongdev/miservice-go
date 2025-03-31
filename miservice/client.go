@@ -20,14 +20,14 @@ const UA = "MiHome/6.0.103 (com.xiaomi.mihome; build:6.0.103.1; iOS 14.4.0) Alam
 
 type SidToken struct {
 	Ssecurity    string `json:"ssecurity"`
-	ServiceToken string `json:"service_token"`
+	ServiceToken string `json:"service_Token"`
 }
 
 type Tokens struct {
 	UserName  string              `json:"user_name"`
 	DeviceId  string              `json:"device_id"`
 	UserId    string              `json:"user_id"`
-	PassToken string              `json:"pass_token"`
+	PassToken string              `json:"pass_Token"`
 	Sids      map[string]SidToken `json:"sids"`
 }
 
@@ -38,20 +38,20 @@ func NewTokens() *Tokens {
 }
 
 type Client struct {
-	token    *Tokens
-	client   *http.Client
-	username string
-	password string
+	Token    *Tokens
+	Client   *http.Client
+	Username string
+	Password string
 }
 
 func NewClient(username string, password string) *Client {
 	j, _ := cookiejar.New(nil)
 	return &Client{
-		client: &http.Client{
+		Client: &http.Client{
 			Jar: j,
 		},
-		username: username,
-		password: password,
+		Username: username,
+		Password: password,
 	}
 }
 
@@ -82,18 +82,18 @@ type loginResp struct {
 // sid: service id, like "xiaomiio", "micoapi", "mina"
 func (ma *Client) Login(sid string) error {
 	var err error
-	if ma.token == nil {
-		ma.token = NewTokens()
-		ma.token.UserName = ma.username
-		ma.token.DeviceId = strings.ToUpper(getRandom(16))
+	if ma.Token == nil {
+		ma.Token = NewTokens()
+		ma.Token.UserName = ma.Username
+		ma.Token.DeviceId = strings.ToUpper(getRandom(16))
 	}
 	cookies := []*http.Cookie{
 		{Name: "sdkVersion", Value: "3.9"},
-		{Name: "deviceId", Value: ma.token.DeviceId},
+		{Name: "deviceId", Value: ma.Token.DeviceId},
 	}
-	if ma.token.PassToken != "" {
-		cookies = append(cookies, &http.Cookie{Name: "userId", Value: ma.token.UserId})
-		cookies = append(cookies, &http.Cookie{Name: "passToken", Value: ma.token.PassToken})
+	if ma.Token.PassToken != "" {
+		cookies = append(cookies, &http.Cookie{Name: "userId", Value: ma.Token.UserId})
+		cookies = append(cookies, &http.Cookie{Name: "passToken", Value: ma.Token.PassToken})
 	}
 	var resp *loginResp
 	resp, err = ma.serviceLogin(fmt.Sprintf("serviceLogin?sid=%s&_json=true", sid), nil, cookies)
@@ -107,8 +107,8 @@ func (ma *Client) Login(sid string) error {
 			"sid":      {resp.Sid},
 			"_sign":    {resp.Sign},
 			"callback": {resp.Callback},
-			"user":     {ma.username},
-			"hash":     {strings.ToUpper(fmt.Sprintf("%x", md5.Sum([]byte(ma.password))))},
+			"user":     {ma.Username},
+			"hash":     {strings.ToUpper(fmt.Sprintf("%x", md5.Sum([]byte(ma.Password))))},
 		}
 		resp, err = ma.serviceLogin("serviceLoginAuth2", data, cookies)
 		if err != nil {
@@ -118,15 +118,15 @@ func (ma *Client) Login(sid string) error {
 			return fmt.Errorf("serviceLoginAuth2 error: %v", resp)
 		}
 	}
-	ma.token.UserId = fmt.Sprint(resp.UserID)
-	ma.token.PassToken = resp.PassToken
+	ma.Token.UserId = fmt.Sprint(resp.UserID)
+	ma.Token.PassToken = resp.PassToken
 
 	var serviceToken string
 	serviceToken, err = ma.requestServiceToken(resp.Location, resp.Ssecurity, resp.Nonce)
 	if err != nil {
 		return err
 	}
-	ma.token.Sids[sid] = SidToken{
+	ma.Token.Sids[sid] = SidToken{
 		Ssecurity:    resp.Ssecurity,
 		ServiceToken: serviceToken,
 	}
@@ -149,7 +149,7 @@ func (ma *Client) serviceLogin(name string, data url.Values, cookies []*http.Coo
 	for _, cookie := range cookies {
 		req.AddCookie(cookie)
 	}
-	resp, err := ma.client.Do(req)
+	resp, err := ma.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func (ma *Client) requestServiceToken(location, ssecurity string, nonce int64) (
 		"User-Agent": []string{UA},
 	}
 	req.Header = headers
-	resp, err := ma.client.Do(req)
+	resp, err := ma.Client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -198,21 +198,21 @@ func (ma *Client) requestServiceToken(location, ssecurity string, nonce int64) (
 	return serviceToken, nil
 }
 
-type DataCb func(tokens *Tokens, cookie map[string]string) url.Values
+type DataCb func(Tokens *Tokens, cookie map[string]string) url.Values
 
 func (ma *Client) NewRequest(sid, u string, data url.Values, cb DataCb, headers http.Header) *http.Request {
 	var req *http.Request
 	var body io.Reader
 	cookies := []*http.Cookie{
-		{Name: "userId", Value: ma.token.UserId},
-		{Name: "serviceToken", Value: ma.token.Sids[sid].ServiceToken},
+		{Name: "userId", Value: ma.Token.UserId},
+		{Name: "serviceToken", Value: ma.Token.Sids[sid].ServiceToken},
 	}
 	method := http.MethodGet
 	if data != nil || cb != nil {
 		var vals url.Values
 		if cb != nil {
 			var cookieMap = make(map[string]string)
-			vals = cb(ma.token, cookieMap)
+			vals = cb(ma.Token, cookieMap)
 			for k, v := range cookieMap {
 				cookies = append(cookies, &http.Cookie{Name: k, Value: v})
 			}
@@ -237,10 +237,10 @@ func (ma *Client) NewRequest(sid, u string, data url.Values, cb DataCb, headers 
 }
 
 func (ma *Client) hasSid(sid string) bool {
-	if ma.token == nil {
+	if ma.Token == nil {
 		return false
 	}
-	_, ok := ma.token.Sids[sid]
+	_, ok := ma.Token.Sids[sid]
 	return ok
 }
 
@@ -252,7 +252,7 @@ func (ma *Client) Request(sid, u string, data url.Values, cb DataCb, headers htt
 		}
 	}
 	req := ma.NewRequest(sid, u, data, cb, headers)
-	resp, err := ma.client.Do(req)
+	resp, err := ma.Client.Do(req)
 	if err != nil {
 		return err
 	}

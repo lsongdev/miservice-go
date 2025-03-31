@@ -1,3 +1,3 @@
-module github.com/lsongdev/miservice-go
+module github.com/GHOSTEDDIE/miservice-go
 
 go 1.20
