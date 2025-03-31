@@ -77,6 +77,10 @@ func (s *Client) MiotAction(did string, iid []int, in []any) (H, error) {
 	return result.(H), nil
 }
 
+func (c *Client) Speak(did, text string) (H, error) {
+	return c.MiotAction(did, []int{5, 1}, []any{text})
+}
+
 // func (c *Client) GetVolume(did string) (float64, error) {
 // 	out, err := c.MiotGetProp(did, Iid{Siid: 2, Piid: 1})
 // 	if err != nil {
@@ -120,10 +124,6 @@ func (s *Client) MiotAction(did string, iid []int, in []any) (H, error) {
 
 // func (c *Client) Previous(did string) (H, error) {
 // 	return c.MiotAction(did, []int{4, 4}, []any{})
-// }
-
-// func (c *Client) Speak(did, text string) (H, error) {
-// 	return c.MiotAction(did, []int{5, 1}, []any{text})
 // }
 
 // func (c *Client) WakeUp(did string) (H, error) {

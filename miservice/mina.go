@@ -2,10 +2,14 @@ package miservice
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 func (c *Client) MinaRequest(path string, data url.Values, out H) error {
@@ -81,6 +85,71 @@ func (c *Client) ListMinaDevices(master int) (devices []DeviceData, err error) {
 		json.Unmarshal(ja, &devices[i])
 	}
 	return devices, nil
+}
+
+func (c *Client) FindDeviceById(did string) (device DeviceData, err error) {
+	devices, err := c.ListMinaDevices(1)
+	if err != nil {
+		return
+	}
+	for _, d := range devices {
+
+		if d.MiotDID == did {
+			device = d
+			return
+		}
+	}
+	return
+}
+
+type ConversationRecord struct {
+	Query     string           `json:"query"`
+	Answers   []map[string]any `json:"answers"`
+	Time      int64            `json:"time"`
+	RequestID string           `json:"requestId"`
+}
+
+func (c *Client) GetConversations(did string) (records []ConversationRecord, err error) {
+	c.Login("micoapi")
+	device, err := c.FindDeviceById(did)
+	if err != nil {
+		return
+	}
+	guid := uuid.New().String()
+	url := fmt.Sprintf("https://userprofile.mina.mi.com/device_profile/v2/conversation?limit=%d&requestId=%s&source=dialogu&hardware=%s", 10, guid, device.Hardware)
+	client := &http.Client{}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Add("User-Agent", UA)
+	req.Header.Add("Referer", "ttps://userprofile.mina.mi.com/dialogue-note/index.html")
+	req.Header.Add("Cookie", fmt.Sprintf(`userId=%s; serviceToken=%s; deviceId=%s`, c.Token.UserId, c.Token.Sids["micoapi"].ServiceToken, device.DeviceID))
+	res, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	var m struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+		Data    string `json:"data"`
+	}
+	err = json.Unmarshal(body, &m)
+	if m.Code != 0 {
+		err = errors.New(m.Message)
+		return
+	}
+	var k struct {
+		Records []ConversationRecord `json:"records"`
+	}
+	err = json.Unmarshal([]byte(m.Data), &k)
+	records = k.Records
+	return
 }
 
 func (c *Client) RemoteUbusCall(deviceId, cmd string, message H, res H) error {
