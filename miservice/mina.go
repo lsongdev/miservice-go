@@ -85,8 +85,9 @@ func (c *Client) ListMinaDevices(master int) (devices []DeviceData, err error) {
 }
 
 func (c *Client) GetConversations(did string) (map[string]interface{}, error) {
-	c.Login("mina")
-	fmt.Println(c)
+	c.Login("micoapi")
+	fmt.Println(c.Token.Sids)
+
 	fmt.Println("c")
 
 	fmt.Println(c.Token.Sids["micoapi"].ServiceToken)
