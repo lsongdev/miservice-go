@@ -82,7 +82,6 @@ type loginResp struct {
 
 // sid: service id, like "xiaomiio", "micoapi", "mina"
 func (ma *Client) Login(sid string) error {
-	fmt.Println("登录前的token: ", ma.Token)
 	var err error
 	if ma.Token == nil {
 		ma.Token = NewTokens()
@@ -103,7 +102,6 @@ func (ma *Client) Login(sid string) error {
 		return err
 	}
 	if resp.Code != 0 {
-		fmt.Println("首次请求失败")
 		data := url.Values{
 			"_json":    {"true"},
 			"qs":       {resp.Qs},
@@ -123,10 +121,6 @@ func (ma *Client) Login(sid string) error {
 	}
 	ma.Token.UserId = fmt.Sprint(resp.UserID)
 	ma.Token.PassToken = resp.PassToken
-	fmt.Println("resp", resp)
-	fmt.Println("resp.Location", resp.Location)
-	fmt.Println("resp.Ssecurity", resp.Ssecurity)
-	fmt.Println("resp.Nonce", resp.Nonce)
 
 	var serviceToken string
 	serviceToken, err = ma.requestServiceToken(resp.Location, resp.Ssecurity, resp.Nonce)
@@ -158,7 +152,6 @@ func (ma *Client) serviceLogin(name string, data url.Values, cookies []*http.Coo
 		req.AddCookie(cookie)
 	}
 	resp, err := ma.Client.Do(req)
-	fmt.Println("serviceLogin resp", resp)
 	if err != nil {
 		return nil, err
 	}
@@ -254,8 +247,6 @@ func (ma *Client) hasSid(sid string) bool {
 }
 
 func (ma *Client) Request(sid, u string, data url.Values, cb DataCb, headers http.Header, output H) error {
-	fmt.Println("request中的SID", sid)
-	fmt.Println(sid)
 	if !ma.hasSid(sid) {
 		err := ma.Login(sid)
 		if err != nil {

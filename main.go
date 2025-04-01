@@ -23,7 +23,7 @@ func main() {
 	//	log.Fatal(err2)
 	//}
 	//fmt.Println(devices[0])
-	client.MiotAction("936062221", []int{5, 1}, []any{"¿ʞо ∩оʎ ǝɹɐ"})
+	//client.MiotAction("936062221", []int{5, 1}, []any{"¿ʞо ∩оʎ ǝɹɐ"})
 	//client = miservice.NewClient(
 	//	"2901732950",
 	//	"kz185132",
