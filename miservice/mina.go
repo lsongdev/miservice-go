@@ -2,9 +2,7 @@ package miservice
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -109,15 +107,13 @@ type ConversationRecord struct {
 	RequestID string           `json:"requestId"`
 }
 
-func (c *Client) GetConversations(did string) (records []ConversationRecord, err error) {
-	c.Login("micoapi")
+func (c *Client) GetConversationRecords(did string, limit int) (records []ConversationRecord, err error) {
 	device, err := c.FindDeviceById(did)
 	if err != nil {
 		return
 	}
-	guid := uuid.New().String()
-	url := fmt.Sprintf("https://userprofile.mina.mi.com/device_profile/v2/conversation?limit=%d&requestId=%s&source=dialogu&hardware=%s", 10, guid, device.Hardware)
-	client := &http.Client{}
+	requestId := uuid.New().String()
+	url := fmt.Sprintf("https://userprofile.mina.mi.com/device_profile/v2/conversation?limit=%d&requestId=%s&source=dialogu&hardware=%s", limit, requestId, device.Hardware)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return
@@ -125,12 +121,7 @@ func (c *Client) GetConversations(did string) (records []ConversationRecord, err
 	req.Header.Add("User-Agent", UA)
 	req.Header.Add("Referer", "ttps://userprofile.mina.mi.com/dialogue-note/index.html")
 	req.Header.Add("Cookie", fmt.Sprintf(`userId=%s; serviceToken=%s; deviceId=%s`, c.Token.UserId, c.Token.Sids["micoapi"].ServiceToken, device.DeviceID))
-	res, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
+	res, err := c.Client.Do(req) // maybe use c.Request()
 	if err != nil {
 		return
 	}
@@ -139,9 +130,9 @@ func (c *Client) GetConversations(did string) (records []ConversationRecord, err
 		Message string `json:"message"`
 		Data    string `json:"data"`
 	}
-	err = json.Unmarshal(body, &m)
+	err = json.NewDecoder(res.Body).Decode(&m)
 	if m.Code != 0 {
-		err = errors.New(m.Message)
+		err = fmt.Errorf("error: %d %s", m.Code, m.Message)
 		return
 	}
 	var k struct {

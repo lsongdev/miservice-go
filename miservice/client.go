@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -55,28 +54,81 @@ func NewClient(username string, password string) *Client {
 	}
 }
 
+/*
+	&&&START&&&{
+	    "serviceParam": "{\"checkSafePhone\":false,\"checkSafeAddress\":false,\"lsrp_score\":0.0}",
+	    "qs": "%3Fsid%3Dmicoapi%26_json%3Dtrue",
+	    "code": 70016,
+	    "description": "登录验证失败",
+	    "securityStatus": 0,
+	    "_sign": "58VY7HzpBxBcLsgTGFWDyJ7fEtw=",
+	    "sid": "micoapi",
+	    "result": "error",
+	    "miDemo": 0,
+	    "captchaUrl": null,
+	    "callback": "https://api2.mina.mi.com/sts",
+	    "location": "https://account.xiaomi.com/fe/service/login?_json=true&sid=micoapi&qs=%253Fsid%253Dmicoapi%2526_json%253Dtrue&callback=https%3A%2F%2Fapi2.mina.mi.com%2Fsts&_sign=58VY7HzpBxBcLsgTGFWDyJ7fEtw%3D&serviceParam=%7B%22checkSafePhone%22%3Afalse%2C%22checkSafeAddress%22%3Afalse%2C%22lsrp_score%22%3A0.0%7D&showActiveX=false&theme=&needTheme=false&bizDeviceType=",
+	    "pwd": 0,
+	    "child": 0,
+	    "desc": "登录验证失败"
+	}
+*/
+/*
+	&&&START&&&{
+		"notificationUrl": "https://account.xiaomi.com/fe/service/identity/authStart?mask=4294967296&sid=micoapi&context=j06JTKj5NAJbEQN388a-lVn4jW6G-P3y4z2Dm6mp-Y-q4j4AWudl96OH885cjLXM0EeIWY80GRwW_ELaamIeA4XyFF-pezBKDjA1FTyff0UJLnXTcN_YocgOO7y-wfqJOPsIX33auHINz3fSrQ8pwYtP08LGpvat2t0wc--Jsliga3S7UKBmcMBlnxS-JaUMIGwPWQSVk7Zy3mlDNuLb6kcokakJDqM8ozMgsAh0Xpcm7i5jb4Ij9nZrtGTSJSbD6B01es-V79e8Ijq1vp8BSoGDATBbCvKBQKVmpR4Qiz_Tu9zT7-uhXMHUVeH0aqfSG9_wLdk1XrTmDV0R5Qec2OJkmOvV8lMumlSU2JYhtKmzzEAivotCQTYeqXEWU5fBMjHfIKO_OgToGXKOeG9vyx4Tbe5a4tFsNThbG8wHWj5iaKXjrEs4T-oj7qNsMVObdcRj8DZxHxXpXfrFuAoq24Iw37sCuEkWxyJGJVS4C7qzqhMHOdOoC5yRI2mobJQDldymALYMXCoT2oOfEJ1sV_c3B2Moju-t5fvse3XFTEvCFWeqmXVgpwaSZabFstJvp1ln3BVp1fdI3XFRKncWhMPnaA5vCpEE6C5vOwK5JwXkdoLCdX0gaNkQV-J36MDuSyCekPAa4pdyJvJaf1FuuFQMZ5QDyCba-1gJwrhgqMJ7IEY6clHxMXCpk0428dEovU0Qq0FKcA6-jZjvWzdotZWU0XWC8SjrHzAIr0ak8Ul8fakopxFFRWVrZE3CrutkXpg0IwafuU288cuR5D9VBiy43Gz37lygtY3LXGdsvNQ&_locale=zh_CN",
+		"result": "ok",
+		"code": 0,
+		"miDemo": 0,
+		"captchaUrl": null,
+		"description": "成功",
+		"location": "",
+		"securityStatus": 16,
+		"pwd": 0,
+		"child": 0,
+		"desc": "成功"
+	}
+	&&&START&&&{
+		"qs": "%3Fsid%3Dmicoapi%26_json%3Dtrue",
+		"ssecurity": "GzQp36CUTLlxjhu857oqAQ==",
+		"code": 0,
+		"passToken": "V1:DXmurwq2/R1BHTELu6obCe7IGCsy2ygh/0/HHWxGX1n+Fsvswwz79pexDWs6aSTnoKso98amCR/T/49Ej8cnR47+iegXPoi8JSHVE5gOG6Hr0gHFsqHOBy4fqI0n4eTxwMqxbVtYcalF4N/eYW1PHOAcFZhGAlmaXHvA2/dWQ2mhhfCDRk8BmGnMUYbkvNbhRDKhHg6LgOJ331n/sdROXMDw9Bwq9D9+zOSSNlFl0XyzON2szh+6rKPTyCf3rjZrHM43ZZT+enVw2IWwsUIy+cnixljh3gfBbvuC8C+nMyWdJa49IR1XdYy1tuKglQ6CAxCQCxJobMtVlKfFowWpfw==",
+		"description": "成功",
+		"securityStatus": 0,
+		"nonce": 6444317629414392832,
+		"userId": 833175247,
+		"cUserId": "bJAwGb4agKjis8KHgNq-ve5CSi8",
+		"result": "ok",
+		"psecurity": "S5gf5eNLng2SFJWP2ClHTQ==",
+		"miDemo": 0,
+		"captchaUrl": null,
+		"location": "https://api2.mina.mi.com/sts?d=ARMPSJCLYJI97DIY&ticket=0&pwd=1&p_ts=1773724859214&fid=0&p_lm=1&p_ur=US&auth=DajFn2eEqxo5KbQAZ91nqA%2FIVnkAqMVUTSQnvNzbWAIVdSrzlKs5YKqzqLw87XP0gZ3i7IfqeDeqtdG4S5DfnN4ZMQVSKqgLygchE1raYhs8vkRuNLt3isOKoYAAf8grRakt6W6i3dFtCj%2FF7OS%2Bzyv8i9tnh68z%2BNXKm3dMGp8%3D&m=1&_group=DEFAULT&tsl=0&p_ca=0&p_idc=China&nonce=W8u1QjZAoKkBwxTg&_ssign=lMU3LlkUKAA9wb1sjRJvPFLKXnI%3D",
+		"pwd": 1,
+		"child": 0,
+		"desc": "成功"
+	}
+*/
 type loginResp struct {
-	Qs             string      `json:"qs"`
-	Ssecurity      string      `json:"ssecurity"`
-	Code           int         `json:"code"`
-	PassToken      string      `json:"passToken"`
-	Description    string      `json:"description"`
-	SecurityStatus int         `json:"securityStatus"`
-	Nonce          int64       `json:"nonce"`
-	UserID         int         `json:"userId"`
-	CUserID        string      `json:"cUserId"`
-	Result         string      `json:"result"`
-	Psecurity      string      `json:"psecurity"`
-	CaptchaURL     interface{} `json:"captchaUrl"`
-	Location       string      `json:"location"`
-	Pwd            int         `json:"pwd"`
-	Child          int         `json:"child"`
-	Desc           string      `json:"desc"`
-
-	ServiceParam string `json:"serviceParam"`
-	Sign         string `json:"_sign"`
-	Sid          string `json:"sid"`
-	Callback     string `json:"callback"`
+	Qs              string `json:"qs"`
+	Ssecurity       string `json:"ssecurity"`
+	Code            int    `json:"code"`
+	PassToken       string `json:"passToken"`
+	Description     string `json:"description"`
+	SecurityStatus  int    `json:"securityStatus"`
+	Nonce           int64  `json:"nonce"`
+	UserID          int    `json:"userId"`
+	CUserID         string `json:"cUserId"`
+	Result          string `json:"result"`
+	PSecurity       string `json:"psecurity"`
+	CaptchaURL      any    `json:"captchaUrl"`
+	NotificationURL string `json:"notificationUrl"`
+	Location        string `json:"location"`
+	Pwd             int    `json:"pwd"`
+	Child           int    `json:"child"`
+	Desc            string `json:"desc"`
+	ServiceParam    string `json:"serviceParam"`
+	Sign            string `json:"_sign"`
+	Sid             string `json:"sid"`
+	Callback        string `json:"callback"`
 }
 
 // sid: service id, like "xiaomiio", "micoapi", "mina"
@@ -117,11 +169,14 @@ func (ma *Client) Login(sid string) error {
 		if resp.Code != 0 {
 			return fmt.Errorf("serviceLoginAuth2 error: %v", resp)
 		}
+		if resp.NotificationURL != "" {
+			err = fmt.Errorf("需要安全验证: %s", resp.NotificationURL)
+			return err
+		}
 	}
 	ma.Token.UserId = fmt.Sprint(resp.UserID)
 	ma.Token.PassToken = resp.PassToken
-	var serviceToken string
-	serviceToken, err = ma.requestServiceToken(resp.Location, resp.Ssecurity, resp.Nonce)
+	serviceToken, err := ma.requestServiceToken(resp.Location, resp.Ssecurity, resp.Nonce)
 	if err != nil {
 		return err
 	}
@@ -163,7 +218,12 @@ func (ma *Client) serviceLogin(name string, data url.Values, cookies []*http.Coo
 	if err != nil {
 		return nil, err
 	}
-	return &jsonResponse, nil
+	if jsonResponse.Code != 0 {
+		// err = fmt.Errorf("Service Login Error:%d %s", jsonResponse.Code, jsonResponse.Desc)
+		// log.Println("Service Login Error:", jsonResponse.Code, jsonResponse.Desc)
+	}
+	// log.Println(string(body))
+	return &jsonResponse, err
 }
 
 func (ma *Client) requestServiceToken(location, ssecurity string, nonce int64) (string, error) {
@@ -181,6 +241,9 @@ func (ma *Client) requestServiceToken(location, ssecurity string, nonce int64) (
 	if err != nil {
 		return "", err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("response error: %d", resp.StatusCode)
+	}
 	defer resp.Body.Close()
 	cookies := resp.Cookies()
 	var serviceToken string
@@ -192,7 +255,7 @@ func (ma *Client) requestServiceToken(location, ssecurity string, nonce int64) (
 	}
 	body, _ := io.ReadAll(resp.Body)
 	if serviceToken == "" {
-		return "", errors.New(string(body))
+		return "", fmt.Errorf("service token not found in cookie, body: %s", body)
 	}
 	return serviceToken, nil
 }

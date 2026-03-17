@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -12,32 +13,32 @@ func main() {
 		os.Getenv("MI_USERNAME"),
 		os.Getenv("MI_PASSWORD"),
 	)
-	//devices, err2 := client.ListMinaDevices(1)
-	//if err2 != nil {
-	//	log.Fatal(err2)
-	//}
-	//fmt.Println(devices[0])
-
 	devices, err2 := client.ListMinaDevices(1)
 	if err2 != nil {
 		log.Fatal(err2)
 	}
+	fmt.Println("Devices:")
 	for _, device := range devices {
-		log.Println(device.Name, device.MiotDID)
+		fmt.Println(" - ", device.Name, device.MiotDID)
 	}
-	// fmt.Println(devices[0])
+
+	// device := devices[0]
 	// client.MiotAction("104854757", []int{5, 1}, []any{"hi"})
 	// client.Speak("104854757", "hi")
-	records, err := client.GetConversations("104854757")
+	records, err := client.GetConversationRecords("104854757", 100)
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, record := range records {
+	fmt.Println("Message History")
+	for i, record := range records {
 		for _, answer := range record.Answers {
 			if answer["type"] == "TTS" {
-				log.Println(record.Query, "===>", answer["tts"].(map[string]any)["text"])
+				fmt.Printf("---------------- %d --------------------\n", i)
+				fmt.Println(" - Q:", record.Query)
+				fmt.Println(" - A:", answer["tts"].(map[string]any)["text"])
+
 			} else {
-				log.Println(record.Query, answer)
+				fmt.Println(record.Query, answer)
 			}
 		}
 	}
